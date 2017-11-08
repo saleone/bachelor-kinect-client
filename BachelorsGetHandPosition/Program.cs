@@ -12,21 +12,6 @@ namespace BachelorsGetHandPosition
         static void Main(string[] args)
         {
             sensor = GetKinectSensor();
-            int elevation;
-            try
-            {
-                elevation = int.Parse(args[1]);
-            }
-            catch (IndexOutOfRangeException)
-            {
-                elevation = -27;
-            }
-
-            if (elevation >= 20 && elevation <= 0)
-            {
-                Console.WriteLine();
-            }
-
             sensor.Start();
             sensor.ElevationAngle = 15;
 
@@ -55,6 +40,37 @@ namespace BachelorsGetHandPosition
                         sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Seated;
                     }
                 }
+                else if (pressed.Key == ConsoleKey.UpArrow)
+                {
+                    if (sensor.ElevationAngle < sensor.MaxElevationAngle)
+                    {
+                        sensor.ElevationAngle += 1;
+                        Console.Write("Increasing sensor elevation angle to: ");
+                    }
+                    else
+                    {
+                        Console.Write("Sensor is already at its highest elevation angle:");
+                    }
+                    Console.WriteLine(sensor.ElevationAngle);
+                }
+                else if (pressed.Key == ConsoleKey.DownArrow)
+                {
+                    if (sensor.ElevationAngle > sensor.MinElevationAngle)
+                    {
+                        sensor.ElevationAngle -= 1;
+                        Console.Write("Decreasing sensor elevation angle to: ");
+                    }
+                    else
+                    {
+                        Console.Write("Sensor is already at its lowest elevation angle: ");
+                    }
+                    Console.WriteLine(sensor.ElevationAngle);
+                }
+                else if (pressed.Key == ConsoleKey.R)
+                {
+                    Console.WriteLine("Reseting sensor elevation.");
+                    sensor.ElevationAngle = 15;
+                }
             }
         }
 
@@ -62,6 +78,7 @@ namespace BachelorsGetHandPosition
         {
             if (sensor != null)
             {
+                Console.WriteLine("Stopping sensor.");
                 sensor.Stop();
                 sensor.AudioSource.Stop();
             }
