@@ -10,9 +10,9 @@ namespace BachelorsGetHandPosition
 
         public Vector3(float x, float y, float z)
         {
-            X = (float) Math.Round(x, 2);
-            Y = (float) Math.Round(y, 2);
-            Z = (float) Math.Round(z, 2);
+            X = (float)Math.Round(x, 2);
+            Y = (float)Math.Round(y, 2);
+            Z = (float)Math.Round(z, 2);
         }
 
         public static Vector3 operator +(Vector3 first, Vector3 second)
@@ -23,6 +23,11 @@ namespace BachelorsGetHandPosition
         public static Vector3 operator -(Vector3 f, Vector3 s)
         {
             return new Vector3(f.X - s.X, f.Y - s.Y, f.Z - s.Z);
+        }
+
+        public static Vector3 operator *(Vector3 f, int num)
+        {
+            return new Vector3(f.X * num, f.Y * num, f.Z * num);
         }
 
     }

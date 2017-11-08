@@ -7,6 +7,7 @@ namespace BachelorsGetHandPosition
     class GetHandPosition
     {
         public static KinectSensor sensor = null;
+        public static int frameCounter = 0;
 
         static void Main(string[] args)
         {
@@ -18,21 +19,43 @@ namespace BachelorsGetHandPosition
             }
             catch (IndexOutOfRangeException)
             {
-                elevation = 15;
+                elevation = -27;
             }
 
             if (elevation >= 20 && elevation <= 0)
             {
                 Console.WriteLine();
             }
-            
 
             sensor.Start();
+            sensor.ElevationAngle = 15;
 
 
             // When connected to the sensor dont let the application to close
-            while (true) ;
-
+            ConsoleKeyInfo pressed;
+            while (true)
+            {
+                pressed = Console.ReadKey();
+                if (pressed.Key == ConsoleKey.Escape)
+                {
+                    Destruct();
+                    break;
+                }
+                else if (pressed.Key == ConsoleKey.Spacebar)
+                {
+                    Console.Write("Changing tracking mode:");
+                    if (sensor.SkeletonStream.TrackingMode == SkeletonTrackingMode.Seated)
+                    {
+                        Console.WriteLine(" Seated -> Default ");
+                        sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Default;
+                    }
+                    else
+                    {
+                        Console.WriteLine(" Default -> Seated ");
+                        sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Seated;
+                    }
+                }
+            }
         }
 
         static void Destruct()
@@ -61,6 +84,8 @@ namespace BachelorsGetHandPosition
                     if (_sensor.Status == KinectStatus.Connected)
                     {
                         _sensor.SkeletonStream.Enable();
+                        _sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Seated;
+                        _sensor.ColorStream.Enable();
                         _sensor.SkeletonFrameReady += _sensor_SkeletonFrameReady;
                         Console.WriteLine("\n Connected.");
                         return _sensor;
@@ -82,6 +107,11 @@ namespace BachelorsGetHandPosition
         /// <param name="e"></param>
         private static void _sensor_SkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs e)
         {
+            if ((frameCounter++ % 10) != 0)
+            {
+                return;
+            }
+
             Skeleton[] skeletonData = new Skeleton[6];
             using (var skeletonFrame = e.OpenSkeletonFrame())
             {
@@ -100,8 +130,8 @@ namespace BachelorsGetHandPosition
             if (skeleton == null)
                 return;
 
-            Vector3 pos = GetHandPositionVector(skeleton);
-            Console.WriteLine(string.Format("Hand position vector is: ({0}, {1}, {2})", pos.X, pos.Y, pos.Z));
+            Vector3 pos = GetHandPositionVector(skeleton) * 100;
+            Console.WriteLine(string.Format("({0}, {1}, {2})", pos.X, pos.Y, pos.Z));
 
         }
 
