@@ -9,6 +9,7 @@ namespace BachelorsGetHandPosition
         public static KinectSensor sensor = null;
         public static int frameCounter = 0;
         public static int initialElevationAngle = 15;
+        public static int framerateFactor = 10;
 
         static void Main(string[] args)
         {
@@ -39,6 +40,12 @@ namespace BachelorsGetHandPosition
                     case ConsoleKey.R:
                         Console.WriteLine("Reseting sensor elevation.");
                         sensor.ElevationAngle = initialElevationAngle;
+                        break;
+                    case ConsoleKey.RightArrow:
+                        IncreaseFramerateFactor();
+                        break;
+                    case ConsoleKey.LeftArrow:
+                        DecreaseFramerateFactor();
                         break;
                 }
             }
@@ -94,7 +101,7 @@ namespace BachelorsGetHandPosition
         /// <param name="e"></param>
         private static void _sensor_SkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs e)
         {
-            if ((frameCounter++ % 10) != 0)
+            if ((frameCounter++ % framerateFactor) != 0)
             {
                 return;
             }
@@ -150,17 +157,16 @@ namespace BachelorsGetHandPosition
 
         private static void IncreaseSensorElevationAngle()
         {
-            Console.Write("Changing tracking mode:");
-            if (sensor.SkeletonStream.TrackingMode == SkeletonTrackingMode.Seated)
+            if (sensor.ElevationAngle < sensor.MaxElevationAngle)
             {
-                Console.WriteLine(" Seated -> Default ");
-                sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Default;
+                sensor.ElevationAngle += 1;
+                Console.Write("Increasing sensor elevation angle to: ");
             }
             else
             {
-                Console.WriteLine(" Default -> Seated ");
-                sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Seated;
+                Console.Write("Sensor is already at its highest elevation angle: ");
             }
+            Console.WriteLine(sensor.ElevationAngle);
         }
 
         private static void DecreaseSensorElevationaAngle()
@@ -175,6 +181,18 @@ namespace BachelorsGetHandPosition
                 Console.Write("Sensor is already at its lowest elevation angle: ");
             }
             Console.WriteLine(sensor.ElevationAngle);
+        }
+
+        private static void IncreaseFramerateFactor()
+        {
+            framerateFactor += 1;
+            Console.WriteLine("Increasing framerate factor to: " + framerateFactor);
+        }
+
+        private static void DecreaseFramerateFactor()
+        {
+            framerateFactor -= 1;
+            Console.WriteLine("Decreasing framerate factor to: " + framerateFactor);
         }
     }
 }
