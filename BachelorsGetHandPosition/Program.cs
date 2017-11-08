@@ -8,12 +8,13 @@ namespace BachelorsGetHandPosition
     {
         public static KinectSensor sensor = null;
         public static int frameCounter = 0;
+        public static int initialElevationAngle = 15;
 
         static void Main(string[] args)
         {
             sensor = GetKinectSensor();
             sensor.Start();
-            sensor.ElevationAngle = 15;
+            sensor.ElevationAngle = initialElevationAngle;
 
 
             // When connected to the sensor dont let the application to close
@@ -21,60 +22,29 @@ namespace BachelorsGetHandPosition
             while (true)
             {
                 pressed = Console.ReadKey();
-                if (pressed.Key == ConsoleKey.Escape)
+                switch (pressed.Key)
                 {
-                    Destruct();
-                    break;
-                }
-                else if (pressed.Key == ConsoleKey.Spacebar)
-                {
-                    Console.Write("Changing tracking mode:");
-                    if (sensor.SkeletonStream.TrackingMode == SkeletonTrackingMode.Seated)
-                    {
-                        Console.WriteLine(" Seated -> Default ");
-                        sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Default;
-                    }
-                    else
-                    {
-                        Console.WriteLine(" Default -> Seated ");
-                        sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Seated;
-                    }
-                }
-                else if (pressed.Key == ConsoleKey.UpArrow)
-                {
-                    if (sensor.ElevationAngle < sensor.MaxElevationAngle)
-                    {
-                        sensor.ElevationAngle += 1;
-                        Console.Write("Increasing sensor elevation angle to: ");
-                    }
-                    else
-                    {
-                        Console.Write("Sensor is already at its highest elevation angle:");
-                    }
-                    Console.WriteLine(sensor.ElevationAngle);
-                }
-                else if (pressed.Key == ConsoleKey.DownArrow)
-                {
-                    if (sensor.ElevationAngle > sensor.MinElevationAngle)
-                    {
-                        sensor.ElevationAngle -= 1;
-                        Console.Write("Decreasing sensor elevation angle to: ");
-                    }
-                    else
-                    {
-                        Console.Write("Sensor is already at its lowest elevation angle: ");
-                    }
-                    Console.WriteLine(sensor.ElevationAngle);
-                }
-                else if (pressed.Key == ConsoleKey.R)
-                {
-                    Console.WriteLine("Reseting sensor elevation.");
-                    sensor.ElevationAngle = 15;
+                    case ConsoleKey.Escape:
+                        StopSensor();
+                        return;
+                    case ConsoleKey.Spacebar:
+                        ChangeSensorTrackingMode();
+                        break;
+                    case ConsoleKey.UpArrow:
+                        IncreaseSensorElevationAngle();
+                        break;
+                    case ConsoleKey.DownArrow:
+                        DecreaseSensorElevationaAngle();
+                        break;
+                    case ConsoleKey.R:
+                        Console.WriteLine("Reseting sensor elevation.");
+                        sensor.ElevationAngle = initialElevationAngle;
+                        break;
                 }
             }
         }
 
-        static void Destruct()
+        static void StopSensor()
         {
             if (sensor != null)
             {
@@ -163,5 +133,48 @@ namespace BachelorsGetHandPosition
             return handVec - shoulderVec;
         }
 
+        private static void ChangeSensorTrackingMode()
+        {
+            Console.Write("Changing tracking mode:");
+            if (sensor.SkeletonStream.TrackingMode == SkeletonTrackingMode.Seated)
+            {
+                Console.WriteLine(" Seated -> Default ");
+                sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Default;
+            }
+            else
+            {
+                Console.WriteLine(" Default -> Seated ");
+                sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Seated;
+            }
+        }
+
+        private static void IncreaseSensorElevationAngle()
+        {
+            Console.Write("Changing tracking mode:");
+            if (sensor.SkeletonStream.TrackingMode == SkeletonTrackingMode.Seated)
+            {
+                Console.WriteLine(" Seated -> Default ");
+                sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Default;
+            }
+            else
+            {
+                Console.WriteLine(" Default -> Seated ");
+                sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Seated;
+            }
+        }
+
+        private static void DecreaseSensorElevationaAngle()
+        {
+            if (sensor.ElevationAngle > sensor.MinElevationAngle)
+            {
+                sensor.ElevationAngle -= 1;
+                Console.Write("Decreasing sensor elevation angle to: ");
+            }
+            else
+            {
+                Console.Write("Sensor is already at its lowest elevation angle: ");
+            }
+            Console.WriteLine(sensor.ElevationAngle);
+        }
     }
 }
