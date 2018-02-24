@@ -11,6 +11,9 @@ namespace BachelorsGetHandPosition
         public static int initialElevationAngle = 15;
         public static int framerateFactor = 10;
 
+        // Exception messages
+        public static readonly string AngleChangeErrorMessageFormat = "An error occurred while {0} elevation angle. Please try again.";
+
         static void Main(string[] args)
         {
             sensor = GetKinectSensor();
@@ -35,7 +38,7 @@ namespace BachelorsGetHandPosition
                         IncreaseSensorElevationAngle();
                         break;
                     case ConsoleKey.DownArrow:
-                        DecreaseSensorElevationaAngle();
+                        DecreaseSensorElevationAngle();
                         break;
                     case ConsoleKey.R:
                         Console.WriteLine("Reseting sensor elevation.");
@@ -159,8 +162,15 @@ namespace BachelorsGetHandPosition
         {
             if (sensor.ElevationAngle < sensor.MaxElevationAngle)
             {
-                sensor.ElevationAngle += 1;
-                Console.Write("Increasing sensor elevation angle to: ");
+                try
+                {
+                    sensor.ElevationAngle += 1;
+                    Console.Write("Increasing sensor elevation angle to: ");
+                }
+                catch (InvalidOperationException)
+                {
+                    Console.WriteLine(string.Format(AngleChangeErrorMessageFormat, "increasing"));
+                }
             }
             else
             {
@@ -169,30 +179,37 @@ namespace BachelorsGetHandPosition
             Console.WriteLine(sensor.ElevationAngle);
         }
 
-        private static void DecreaseSensorElevationaAngle()
+        private static void DecreaseSensorElevationAngle()
         {
             if (sensor.ElevationAngle > sensor.MinElevationAngle)
             {
-                sensor.ElevationAngle -= 1;
-                Console.Write("Decreasing sensor elevation angle to: ");
+                try
+                {
+                    sensor.ElevationAngle -= 1;
+                    Console.Write("Decreasing sensor elevation angle to: ");
+                }
+                catch (InvalidOperationException)
+                {
+                    Console.WriteLine(string.Format(AngleChangeErrorMessageFormat, "decreasing"));
+                }
             }
             else
             {
-                Console.Write("Sensor is already at its lowest elevation angle: ");
+                    Console.Write("Sensor is already at its lowest elevation angle: ");
+                }
+                Console.WriteLine(sensor.ElevationAngle);
             }
-            Console.WriteLine(sensor.ElevationAngle);
-        }
 
-        private static void IncreaseFramerateFactor()
-        {
-            framerateFactor += 1;
-            Console.WriteLine("Increasing framerate factor to: " + framerateFactor);
-        }
+            private static void IncreaseFramerateFactor()
+            {
+                framerateFactor += 1;
+                Console.WriteLine("Increasing framerate factor to: " + framerateFactor);
+            }
 
-        private static void DecreaseFramerateFactor()
-        {
-            framerateFactor -= 1;
-            Console.WriteLine("Decreasing framerate factor to: " + framerateFactor);
+            private static void DecreaseFramerateFactor()
+            {
+                framerateFactor -= 1;
+                Console.WriteLine("Decreasing framerate factor to: " + framerateFactor);
+            }
         }
     }
-}
