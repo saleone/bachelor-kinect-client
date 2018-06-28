@@ -1,5 +1,8 @@
 ﻿using Microsoft.Kinect;
 using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 
 namespace BachelorsGetHandPosition
@@ -7,19 +10,20 @@ namespace BachelorsGetHandPosition
     class GetHandPosition
     {
         public static KinectSensor sensor = null;
+        public static Socket client = null;
         public static int frameCounter = 0;
         public static int initialElevationAngle = 15;
-        public static int framerateFactor = 10;
+        public static int framerateFactor = 30;
 
         // Exception messages
         public static readonly string AngleChangeErrorMessageFormat = "An error occurred while {0} elevation angle. Please try again.";
 
         static void Main(string[] args)
         {
+
+            ConnectToServer();
             sensor = GetKinectSensor();
             sensor.Start();
-            sensor.ElevationAngle = initialElevationAngle;
-
 
             // When connected to the sensor dont let the application to close
             ConsoleKeyInfo pressed;
@@ -29,7 +33,7 @@ namespace BachelorsGetHandPosition
                 switch (pressed.Key)
                 {
                     case ConsoleKey.Escape:
-                        StopSensor();
+                        StopApp();
                         return;
                     case ConsoleKey.Spacebar:
                         ChangeSensorTrackingMode();
@@ -42,7 +46,7 @@ namespace BachelorsGetHandPosition
                         break;
                     case ConsoleKey.R:
                         Console.WriteLine("Reseting sensor elevation.");
-                        sensor.ElevationAngle = initialElevationAngle;
+                        sensor.ElevationAngle = (sensor.MaxElevationAngle - sensor.MinElevationAngle) / 2;
                         break;
                     case ConsoleKey.RightArrow:
                         IncreaseFramerateFactor();
@@ -54,15 +58,22 @@ namespace BachelorsGetHandPosition
             }
         }
 
-        static void StopSensor()
+        static void StopApp()
         {
+            Console.WriteLine("Shutting down...");
             if (sensor != null)
             {
-                Console.WriteLine("Stopping sensor.");
+                Console.WriteLine("  Stopping sensor.");
                 sensor.Stop();
                 sensor.AudioSource.Stop();
             }
 
+            if (client != null)
+            {
+                Console.WriteLine("  Closing server connection.");
+                client.Shutdown(SocketShutdown.Both);
+                client.Close();
+            }
         }
 
         /// <summary>
@@ -129,8 +140,44 @@ namespace BachelorsGetHandPosition
 
             Vector3 pos = GetHandPositionVector(skeleton) * 100;
             Console.WriteLine(string.Format("({0}, {1}, {2})", pos.X, pos.Y, pos.Z));
-
+            SendMessage(string.Format("{0};{1};{2}", pos.X, pos.Y, pos.Z));
         }
+
+        /// <summary>
+        /// Connect to server
+        /// </summary>
+        /// <returns></returns>
+        private static void ConnectToServer()
+        {
+            int retryCount = 0;
+            while (client == null)
+            { 
+                if (retryCount >= 10)
+                {
+                    Console.WriteLine("Could not connect to server. Data won't be sent.");
+                    break;
+                }
+
+                client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                try
+                {
+                    client.Connect("localhost", 7777);
+                }
+                catch { continue; }
+            }
+        }
+
+        public static int SendMessage(string message)
+        {
+            client = null;
+            ConnectToServer();
+            return client.Send(Encoding.ASCII.GetBytes(message));
+        }
+
+            //byte[] bytes = new byte[1024];
+            //int bytesRec = client.Receive(bytes);
+            //Console.WriteLine("Echoed test = {0}",
+            //    Encoding.ASCII.GetString(bytes, 0, bytesRec));
 
         private static Vector3 GetHandPositionVector(Skeleton sk)
         {
@@ -200,16 +247,16 @@ namespace BachelorsGetHandPosition
                 Console.WriteLine(sensor.ElevationAngle);
             }
 
-            private static void IncreaseFramerateFactor()
-            {
-                framerateFactor += 1;
-                Console.WriteLine("Increasing framerate factor to: " + framerateFactor);
-            }
+        private static void IncreaseFramerateFactor()
+        {
+            framerateFactor += 1;
+            Console.WriteLine("Increasing framerate factor to: " + framerateFactor);
+        }
 
-            private static void DecreaseFramerateFactor()
-            {
-                framerateFactor -= 1;
-                Console.WriteLine("Decreasing framerate factor to: " + framerateFactor);
-            }
+        private static void DecreaseFramerateFactor()
+        {
+            framerateFactor -= 1;
+            Console.WriteLine("Decreasing framerate factor to: " + framerateFactor);
         }
     }
+}
