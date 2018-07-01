@@ -15,13 +15,23 @@ namespace BachelorsGetHandPosition
         public static int initialElevationAngle = 15;
         public static int framerateFactor = 30;
 
+        public static bool sendMessages = true;
+
         // Exception messages
         public static readonly string AngleChangeErrorMessageFormat = "An error occurred while {0} elevation angle. Please try again.";
 
         static void Main(string[] args)
         {
 
-            ConnectToServer();
+            Console.WriteLine("Do you want to establish connection with the server? (Y/n)");
+            ConsoleKeyInfo answer = Console.ReadKey();
+
+            if (answer.Key == ConsoleKey.N)
+            {
+                Console.WriteLine("Messages won't be sent.");
+                sendMessages = false;
+            }
+
             sensor = GetKinectSensor();
             sensor.Start();
 
@@ -58,6 +68,9 @@ namespace BachelorsGetHandPosition
             }
         }
 
+        /// <summary>
+        /// Safely exits the application.
+        /// </summary>
         static void StopApp()
         {
             Console.WriteLine("Shutting down...");
@@ -138,7 +151,7 @@ namespace BachelorsGetHandPosition
             if (skeleton == null)
                 return;
 
-            Vector3 pos = GetHandPositionVector(skeleton) * 100;
+            Vector3 pos = GetHandPositionVector(skeleton) * 1000; // given in mm (hence * 1000)
             Console.WriteLine(string.Format("({0}, {1}, {2})", pos.X, pos.Y, pos.Z));
             SendMessage(string.Format("{0};{1};{2}", pos.X, pos.Y, pos.Z));
         }
@@ -150,9 +163,11 @@ namespace BachelorsGetHandPosition
         private static void ConnectToServer()
         {
             int retryCount = 0;
+            client = null;
             while (client == null)
-            { 
-                if (retryCount >= 10)
+            {
+                ++retryCount;
+                if (retryCount == 10)
                 {
                     Console.WriteLine("Could not connect to server. Data won't be sent.");
                     break;
@@ -163,31 +178,72 @@ namespace BachelorsGetHandPosition
                 {
                     client.Connect("localhost", 7777);
                 }
-                catch { continue; }
+                catch
+                {
+                    client = null;
+                    continue;
+                }
             }
         }
 
+        /// <summary>
+        /// Send a message to the server.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
         public static int SendMessage(string message)
         {
-            client = null;
-            ConnectToServer();
-            return client.Send(Encoding.ASCII.GetBytes(message));
-        }
+            if (!sendMessages)
+                return 0;
 
-            //byte[] bytes = new byte[1024];
-            //int bytesRec = client.Receive(bytes);
-            //Console.WriteLine("Echoed test = {0}",
-            //    Encoding.ASCII.GetString(bytes, 0, bytesRec));
+            ConnectToServer();
+            if (client != null)
+                return client.Send(Encoding.ASCII.GetBytes(message));
+            return 0;
+        }
 
         private static Vector3 GetHandPositionVector(Skeleton sk)
         {
             Joint shoulder = sk.Joints[JointType.ShoulderRight];
             Joint hand = sk.Joints[JointType.HandRight];
+            Joint elbow = sk.Joints[JointType.ElbowRight];
 
             Vector3 shoulderVec = new Vector3(shoulder.Position.X, shoulder.Position.Y, shoulder.Position.Z);
             Vector3 handVec = new Vector3(hand.Position.X, hand.Position.Y, hand.Position.Z);
 
             return handVec - shoulderVec;
+        }
+
+        /// <summary>
+        /// Returns the angle between given joints. Joint b is the point of the angle.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        private static double JointAngle(Joint a, Joint b, Joint c)
+        {
+            double[] ab = new double[] {
+                b.Position.X - a.Position.X,
+                b.Position.Y - a.Position.Y,
+                b.Position.Z - a.Position.Z,
+            };
+
+            double[] bc = new double[]
+            {
+                c.Position.X - b.Position.X,
+                c.Position.Y - b.Position.Y,
+                c.Position.Z - b.Position.Z,
+            };
+
+            double abVector = Math.Sqrt(Math.Pow(ab[0], 2) + Math.Pow(ab[1], 2) + Math.Pow(ab[2], 2));
+            double bcVector = Math.Sqrt(Math.Pow(bc[0], 2) + Math.Pow(bc[1], 2) + Math.Pow(bc[2], 2));
+            double[] abNorm = { ab[0] / abVector, ab[1] / abVector, ab[2] / abVector };
+            double[] bcNorm = { bc[0] / bcVector, bc[1] / bcVector, bc[2] / bcVector };
+
+            double res= abNorm[0] * bcNorm[0] + abNorm[1] * bcNorm[1] + abNorm[2] * bcNorm[2];
+
+            return Math.Acos(res) * 180.0 / Math.PI; 
         }
 
         private static void ChangeSensorTrackingMode()
@@ -255,7 +311,8 @@ namespace BachelorsGetHandPosition
 
         private static void DecreaseFramerateFactor()
         {
-            framerateFactor -= 1;
+            if (framerateFactor > 1)
+                framerateFactor -= 1;
             Console.WriteLine("Decreasing framerate factor to: " + framerateFactor);
         }
     }
