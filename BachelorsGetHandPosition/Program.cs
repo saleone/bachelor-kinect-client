@@ -15,6 +15,8 @@ namespace BachelorsGetHandPosition
         public static int initialElevationAngle = 15;
         public static int framerateFactor = 30;
 
+        public static int armLenght = 700;
+
         public static bool sendMessages = true;
 
         // Exception messages
@@ -153,8 +155,15 @@ namespace BachelorsGetHandPosition
 
             Vector3 pos = GetHandPositionVector(skeleton) * 1000; // given in mm (hence * 1000)
             Console.WriteLine(string.Format("({0}, {1}, {2})", pos.X, pos.Y, pos.Z));
+            pos = Normalize(pos);
             SendMessage(string.Format("{0};{1};{2}", pos.X, pos.Y, pos.Z));
         }
+
+        private static float Normalize(float val)
+                => val / armLenght;
+
+        private static Vector3 Normalize(Vector3 val)
+            => new Vector3(Normalize(val.X), Normalize(val.Y), Normalize(val.Z));
 
         /// <summary>
         /// Connect to server

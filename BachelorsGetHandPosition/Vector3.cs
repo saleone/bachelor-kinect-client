@@ -15,20 +15,16 @@ namespace BachelorsGetHandPosition
             Z = (float)Math.Round(z, 2);
         }
 
-        public static Vector3 operator +(Vector3 first, Vector3 second)
-        {
-            return new Vector3(first.X - second.X, first.Y - second.Y, first.Z - second.Z);
-        }
+        public double Intensity =>
+            Math.Sqrt(Math.Pow(X, 2) + Math.Pow(Y, 2) + Math.Pow(Z, 2));
 
-        public static Vector3 operator -(Vector3 f, Vector3 s)
-        {
-            return new Vector3(f.X - s.X, f.Y - s.Y, f.Z - s.Z);
-        }
+        public static Vector3 operator +(Vector3 first, Vector3 second) => 
+            new Vector3(first.X - second.X, first.Y - second.Y, first.Z - second.Z);
 
-        public static Vector3 operator *(Vector3 f, int num)
-        {
-            return new Vector3(f.X * num, f.Y * num, f.Z * num);
-        }
+        public static Vector3 operator -(Vector3 f, Vector3 s) => 
+            new Vector3(f.X - s.X, f.Y - s.Y, f.Z - s.Z);
 
+        public static Vector3 operator *(Vector3 f, int num) => 
+            new Vector3(f.X * num, f.Y * num, f.Z * num);
     }
 }
