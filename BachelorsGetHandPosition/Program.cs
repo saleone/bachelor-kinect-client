@@ -13,9 +13,9 @@ namespace BachelorsGetHandPosition
         public static Socket client = null;
         public static int frameCounter = 0;
         public static int initialElevationAngle = 15;
-        public static int framerateFactor = 30;
+        public static int framerateFactor = 5;
 
-        public static int armLenght = 700;
+        public static int armLenght = 570;
 
         public static bool sendMessages = true;
 
@@ -154,9 +154,9 @@ namespace BachelorsGetHandPosition
                 return;
 
             Vector3 pos = GetHandPositionVector(skeleton) * 1000; // given in mm (hence * 1000)
-            Console.WriteLine(string.Format("({0}, {1}, {2})", pos.X, pos.Y, pos.Z));
+            Console.WriteLine(string.Format("({0}, {1}, {2})", pos.X, pos.Z, pos.Y));
             pos = Normalize(pos);
-            SendMessage(string.Format("{0};{1};{2}", pos.X, pos.Y, pos.Z));
+            SendMessage(string.Format("{0};{1};{2}", pos.X, pos.Z, pos.Y));
         }
 
         private static float Normalize(float val)
