@@ -24,7 +24,7 @@ namespace BachelorsGetHandPosition
         public static Vector3 operator -(Vector3 f, Vector3 s) => 
             new Vector3(f.X - s.X, f.Y - s.Y, f.Z - s.Z);
 
-        public static Vector3 operator *(Vector3 f, int num) => 
+        public static Vector3 operator *(Vector3 f, float num) => 
             new Vector3(f.X * num, f.Y * num, f.Z * num);
     }
 }

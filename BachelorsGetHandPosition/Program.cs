@@ -15,7 +15,7 @@ namespace BachelorsGetHandPosition
         public static int initialElevationAngle = 15;
         public static int framerateFactor = 5;
 
-        public static int armLenght = 570;
+        public static int armLength = 54;
 
         public static bool sendMessages = true;
 
@@ -24,16 +24,6 @@ namespace BachelorsGetHandPosition
 
         static void Main(string[] args)
         {
-
-            Console.WriteLine("Do you want to establish connection with the server? (Y/n)");
-            ConsoleKeyInfo answer = Console.ReadKey();
-
-            if (answer.Key == ConsoleKey.N)
-            {
-                Console.WriteLine("Messages won't be sent.");
-                sendMessages = false;
-            }
-
             sensor = GetKinectSensor();
             sensor.Start();
 
@@ -69,7 +59,6 @@ namespace BachelorsGetHandPosition
                 }
             }
         }
-
         /// <summary>
         /// Safely exits the application.
         /// </summary>
@@ -106,8 +95,26 @@ namespace BachelorsGetHandPosition
                     _sensor = KinectSensor.KinectSensors[0];
                     if (_sensor.Status == KinectStatus.Connected)
                     {
-                        _sensor.SkeletonStream.Enable();
-                        _sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Seated;
+                        _sensor.SkeletonStream.Enable(new TransformSmoothParameters {
+                            Correction = 0.9f,
+                            Prediction = 0.0f,
+                            Smoothing = 0.9f,
+                            JitterRadius = 0.02f,
+                            MaxDeviationRadius = 0.01f,
+                        });
+                        _sensor.SkeletonStream.EnableTrackingInNearRange = true;
+
+                            
+                        float correction = _sensor.SkeletonStream.SmoothParameters.Correction;
+                        float jitterRadius = _sensor.SkeletonStream.SmoothParameters.JitterRadius;
+                        float maxDeviationRadius = _sensor.SkeletonStream.SmoothParameters.MaxDeviationRadius;
+                        float prediction = _sensor.SkeletonStream.SmoothParameters.Prediction;
+                        float smoothing = _sensor.SkeletonStream.SmoothParameters.Smoothing;
+                        Console.WriteLine(
+            $"cor:{correction} - jitt:{jitterRadius} - maxDev:{maxDeviationRadius} - pred:{prediction} - smoo:{smoothing} "
+                        );
+
+                        _sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Default;
                         _sensor.ColorStream.Enable();
                         _sensor.SkeletonFrameReady += _sensor_SkeletonFrameReady;
                         Console.WriteLine("\n Connected.");
@@ -153,17 +160,56 @@ namespace BachelorsGetHandPosition
             if (skeleton == null)
                 return;
 
-            Vector3 pos = GetHandPositionVector(skeleton) * 1000; // given in mm (hence * 1000)
-            Console.WriteLine(string.Format("({0}, {1}, {2})", pos.X, pos.Z, pos.Y));
-            pos = Normalize(pos);
-            SendMessage(string.Format("{0};{1};{2}", pos.X, pos.Z, pos.Y));
+            Vector3 pos = GetHandPositionVector(skeleton) * 100f; // given in m (hence * 100)
+            if (!DifferentEnough(previousSent, pos)) return;
+            
+            Vector3 p = Normalize(pos);
+            //Console.WriteLine(string.Format(
+            //     "({0}, {1}, {2}) - ({3}, {4}, {5})", 
+            //     pos.X, pos.Z, pos.Y, p.X, p.Z, p.Y));
+            string msg = string.Format("{0};{1};{2}", p.X, p.Z, p.Y).Replace(",", ".");
+            Console.WriteLine(msg);
+            SendMessage(msg);
+            previousSent = pos;
+        }
+        private static Vector3 previousSent = new Vector3(0f, 0f, 0f);
+
+        private static bool DifferentEnough(Vector3 prev, Vector3 current)
+        {
+            int min_change = 2;
+            if (Math.Abs(prev.X - current.X) > min_change) return true;
+            if (Math.Abs(prev.Y - current.Y) > min_change) return true;
+            if (Math.Abs(prev.Z - current.Z) > min_change) return true;
+            return false;
         }
 
         private static float Normalize(float val)
-                => val / armLenght;
+                => (armLength > Math.Abs(val)) ? val / armLength : 1f;
 
         private static Vector3 Normalize(Vector3 val)
-            => new Vector3(Normalize(val.X), Normalize(val.Y), Normalize(val.Z));
+        {
+            float xN = Normalize(val.X);
+            float yN = Normalize(val.Y);
+            float zN = Normalize(val.Z);
+
+            if (xN >= 1)
+            {
+                yN = 0;
+                zN = 0;
+            }
+            else if (yN >= 1)
+            {
+                xN = 0;
+                zN = 0;
+            }
+            else if (zN >= 1)
+            {
+                xN = 0;
+                yN = 0;
+            }
+
+            return new Vector3(xN, yN, zN);
+        }
 
         /// <summary>
         /// Connect to server
@@ -214,11 +260,12 @@ namespace BachelorsGetHandPosition
         private static Vector3 GetHandPositionVector(Skeleton sk)
         {
             Joint shoulder = sk.Joints[JointType.ShoulderRight];
+            Joint wrist = sk.Joints[JointType.WristRight];
             Joint hand = sk.Joints[JointType.HandRight];
             Joint elbow = sk.Joints[JointType.ElbowRight];
 
             Vector3 shoulderVec = new Vector3(shoulder.Position.X, shoulder.Position.Y, shoulder.Position.Z);
-            Vector3 handVec = new Vector3(hand.Position.X, hand.Position.Y, hand.Position.Z);
+            Vector3 handVec = new Vector3(wrist.Position.X, wrist.Position.Y, wrist.Position.Z);
 
             return handVec - shoulderVec;
         }
