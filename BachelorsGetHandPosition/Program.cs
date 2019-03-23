@@ -163,7 +163,7 @@ namespace BachelorsGetHandPosition
             Vector3 pos = GetHandPositionVector(skeleton) * 100f; // given in m (hence * 100)
             if (!DifferentEnough(previousSent, pos)) return;
             
-            Vector3 p = Normalize(pos);
+            Vector3 p = Normalize(pos) * 100;
             //Console.WriteLine(string.Format(
             //     "({0}, {1}, {2}) - ({3}, {4}, {5})", 
             //     pos.X, pos.Z, pos.Y, p.X, p.Z, p.Y));
@@ -177,39 +177,15 @@ namespace BachelorsGetHandPosition
         private static bool DifferentEnough(Vector3 prev, Vector3 current)
         {
             int min_change = 2;
-            if (Math.Abs(prev.X - current.X) > min_change) return true;
-            if (Math.Abs(prev.Y - current.Y) > min_change) return true;
-            if (Math.Abs(prev.Z - current.Z) > min_change) return true;
-            return false;
+            Vector3 change = prev - current;
+            return change.Intensity > min_change;
         }
 
         private static float Normalize(float val)
-                => (armLength > Math.Abs(val)) ? val / armLength : 1f;
+            => val / armLength;
 
-        private static Vector3 Normalize(Vector3 val)
-        {
-            float xN = Normalize(val.X);
-            float yN = Normalize(val.Y);
-            float zN = Normalize(val.Z);
-
-            if (xN >= 1)
-            {
-                yN = 0;
-                zN = 0;
-            }
-            else if (yN >= 1)
-            {
-                xN = 0;
-                zN = 0;
-            }
-            else if (zN >= 1)
-            {
-                xN = 0;
-                yN = 0;
-            }
-
-            return new Vector3(xN, yN, zN);
-        }
+        private static Vector3 Normalize(Vector3 val) =>
+            new Vector3(Normalize(val.X), Normalize(val.Y), Normalize(val.Z));
 
         /// <summary>
         /// Connect to server
