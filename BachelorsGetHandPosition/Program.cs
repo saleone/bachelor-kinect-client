@@ -1,3 +1,28 @@
+// Program.cs
+//
+// Copyright 2019 Saša Savić <sasa@sasa-savic.com>
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+// IN THE SOFTWARE.
+//
+// SPDX-License-Identifier: MIT
+
+
 ﻿using Microsoft.Kinect;
 using System;
 using System.Net;
@@ -104,16 +129,6 @@ namespace BachelorsGetHandPosition
                         });
                         _sensor.SkeletonStream.EnableTrackingInNearRange = true;
 
-                            
-                        float correction = _sensor.SkeletonStream.SmoothParameters.Correction;
-                        float jitterRadius = _sensor.SkeletonStream.SmoothParameters.JitterRadius;
-                        float maxDeviationRadius = _sensor.SkeletonStream.SmoothParameters.MaxDeviationRadius;
-                        float prediction = _sensor.SkeletonStream.SmoothParameters.Prediction;
-                        float smoothing = _sensor.SkeletonStream.SmoothParameters.Smoothing;
-                        Console.WriteLine(
-            $"cor:{correction} - jitt:{jitterRadius} - maxDev:{maxDeviationRadius} - pred:{prediction} - smoo:{smoothing} "
-                        );
-
                         _sensor.SkeletonStream.TrackingMode = SkeletonTrackingMode.Default;
                         _sensor.ColorStream.Enable();
                         _sensor.SkeletonFrameReady += _sensor_SkeletonFrameReady;
@@ -160,18 +175,16 @@ namespace BachelorsGetHandPosition
             if (skeleton == null)
                 return;
 
-            Vector3 pos = GetHandPositionVector(skeleton) * 100f; // given in m (hence * 100)
+            Vector3 pos = GetHandPositionVector(skeleton) * 100f;
             if (!DifferentEnough(previousSent, pos)) return;
             
             Vector3 p = Normalize(pos) * 100;
-            //Console.WriteLine(string.Format(
-            //     "({0}, {1}, {2}) - ({3}, {4}, {5})", 
-            //     pos.X, pos.Z, pos.Y, p.X, p.Z, p.Y));
             string msg = string.Format("{0};{1};{2}", p.X, p.Z, p.Y).Replace(",", ".");
             Console.WriteLine(msg);
             SendMessage(msg);
             previousSent = pos;
         }
+
         private static Vector3 previousSent = new Vector3(0f, 0f, 0f);
 
         private static bool DifferentEnough(Vector3 prev, Vector3 current)
@@ -244,38 +257,6 @@ namespace BachelorsGetHandPosition
             Vector3 handVec = new Vector3(wrist.Position.X, wrist.Position.Y, wrist.Position.Z);
 
             return handVec - shoulderVec;
-        }
-
-        /// <summary>
-        /// Returns the angle between given joints. Joint b is the point of the angle.
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <param name="c"></param>
-        /// <returns></returns>
-        private static double JointAngle(Joint a, Joint b, Joint c)
-        {
-            double[] ab = new double[] {
-                b.Position.X - a.Position.X,
-                b.Position.Y - a.Position.Y,
-                b.Position.Z - a.Position.Z,
-            };
-
-            double[] bc = new double[]
-            {
-                c.Position.X - b.Position.X,
-                c.Position.Y - b.Position.Y,
-                c.Position.Z - b.Position.Z,
-            };
-
-            double abVector = Math.Sqrt(Math.Pow(ab[0], 2) + Math.Pow(ab[1], 2) + Math.Pow(ab[2], 2));
-            double bcVector = Math.Sqrt(Math.Pow(bc[0], 2) + Math.Pow(bc[1], 2) + Math.Pow(bc[2], 2));
-            double[] abNorm = { ab[0] / abVector, ab[1] / abVector, ab[2] / abVector };
-            double[] bcNorm = { bc[0] / bcVector, bc[1] / bcVector, bc[2] / bcVector };
-
-            double res= abNorm[0] * bcNorm[0] + abNorm[1] * bcNorm[1] + abNorm[2] * bcNorm[2];
-
-            return Math.Acos(res) * 180.0 / Math.PI; 
         }
 
         private static void ChangeSensorTrackingMode()
